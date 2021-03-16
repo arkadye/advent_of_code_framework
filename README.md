@@ -8,11 +8,11 @@ See the examples in advent1.h, advent1.cpp, and advent_of_code_testcases.cpp.
 
 1. Declare the function in the approriate header (normally adventx.h, where x is the day number) and implement in the appropriate .cpp file. It must take no arguments, and return ResultType. E.g.:
 
-     // advent42.h
-     ResultType advent_fortytwo_testcase_a();
+     `// advent42.h`  
+     `ResultType advent_fortytwo_testcase_a();`
      
-     // advent42.cpp
-     ResultType advent_fortytwo_testcase_a() { return "Life The Universe and Everything"; }
+     `// advent42.cpp`    
+     `ResultType advent_fortytwo_testcase_a() { return "Life The Universe and Everything"; }`
      
 2. In advent_of_code_testcases.cpp, go to `const verification_tests tests[]` and add the line `TESTCASE(your_functionName, expected_result),` at the appropriate point in the array. `expected_result` should be a string. In this example it would be `TESTCASE(advent_fortytwo_testcase_a,"Life The Universe and Everything"),`. Importantly: remember to add a COMMA at the end, not a semi-colon. (It's obvious, but muscle memory and habit will make you want to use the semi-colon.)
 
