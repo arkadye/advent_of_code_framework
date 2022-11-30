@@ -7,29 +7,20 @@
 #include <chrono>
 #include <optional>
 #include <iomanip>
+#include <cassert>
+#include <numeric>
 
 #include "../advent/advent_of_code.h"
 #include "../advent/advent_headers.h"
+#include "../advent/advent_setup.h"
 
-using TestFunc = std::function<ResultType()>;
-
-// This describes a test to run.
-struct verification_test
+std::string to_string(const ResultType& rt)
 {
-	std::string name;
-	TestFunc test_func;
-	ResultType expected_result;
-	bool result_known;
-};
-
-// A type to use to indicate the result is not known yet. Using this in a verification test
-// will run the test and report the result, but will count as neither pass nor failure.
-struct Dummy {};
-
-verification_test make_test(std::string name, TestFunc func, int64_t result);
-verification_test make_test(std::string name, TestFunc func, ResultType result);
-verification_test make_test(std::string name, TestFunc func, Dummy);
-verification_test make_test(std::string name, Dummy, Dummy);
+	if (std::holds_alternative<std::string>(rt)) return std::get<std::string>(rt);
+	else if (std::holds_alternative<int64_t>(rt)) return std::to_string(std::get<int64_t>(rt));
+	assert(false);
+	return "!ERROR!";
+}
 
 // Result a test can give.
 enum class test_status : char
@@ -44,9 +35,10 @@ enum class test_status : char
 struct test_result
 {
 	std::string name;
-	ResultType result = "";
-	ResultType expected = "";
+	std::string result;
+	std::string expected;
 	test_status status = test_status::unknown;
+	std::chrono::nanoseconds time_taken;
 };
 
 template <test_status status>
@@ -154,8 +146,8 @@ test_result run_test(const verification_test& test, std::string_view filter)
 	{
 		return test_result{
 			test.name,
-			0,
-			test.expected_result,
+			"",
+			to_string(test.expected_result),
 			test_status::filtered
 		};
 	}
@@ -164,16 +156,17 @@ test_result run_test(const verification_test& test, std::string_view filter)
 	const auto res = test.test_func();
 	const auto end_time = std::chrono::high_resolution_clock::now();
 	const std::chrono::nanoseconds time_taken = end_time - start_time;
-	std::cout << " took " << to_human_readable(time_taken) << '\n';
+	const auto string_result = to_string(res);
+	std::cout << "took " << to_human_readable(time_taken) <<  " and got " << string_result << '\n';
 	auto get_result = [&](test_status status)
 	{
-		return test_result{ test.name,res,test.expected_result,status };
+		return test_result{ test.name,string_result,test.expected_result,status,time_taken };
 	};
-	if (test.result_known && res == test.expected_result)
+	if (test.result_known && string_result == test.expected_result)
 	{
 		return get_result(test_status::pass);
 	}
-	else if (test.result_known && res != test.expected_result)
+	else if (test.result_known && string_result != test.expected_result)
 	{
 		return get_result(test_status::fail);
 	}
@@ -182,53 +175,6 @@ test_result run_test(const verification_test& test, std::string_view filter)
 
 bool verify_all(const std::string& filter)
 {
-#define ARG(func_name) std::string{ #func_name },func_name
-#define TESTCASE(func_name,expected_result) make_test(ARG(func_name),expected_result)
-#define FUNC_NAME(day_num,part_num) advent_ ## day_num ## _p ## part_num
-#define TEST_DECL(day_num,part_num,expected_result) TESTCASE(FUNC_NAME(day_num,part_num),expected_result)
-#define DAY(day_num,part1_result,part2_result) \
-	TEST_DECL(day_num,1,part1_result), \
-	TEST_DECL(day_num,2,part2_result)
-
-	const verification_test tests[] =
-	{
-		TESTCASE(advent_one_testcase_a,"success"),
-		TESTCASE(advent_one_testcase_b,123),
-		DAY(one,Dummy{},Dummy{}),
-		DAY(two,Dummy{},Dummy{}),
-		DAY(three,Dummy{},Dummy{}),
-		DAY(four,Dummy{},Dummy{}),
-		DAY(five,Dummy{},Dummy{}),
-		DAY(six,Dummy{},Dummy{}),
-		DAY(seven,Dummy{},Dummy{}),
-		DAY(eight,Dummy{},Dummy{}),
-		DAY(nine,Dummy{},Dummy{}),
-		DAY(ten,Dummy{},Dummy{}),
-		DAY(eleven,Dummy{},Dummy{}),
-		DAY(twelve,Dummy{},Dummy{}),
-		DAY(thirteen,Dummy{},Dummy{}),
-		DAY(fourteen,Dummy{},Dummy{}),
-		DAY(fifteen,Dummy{},Dummy{}),
-		DAY(sixteen,Dummy{},Dummy{}),
-		DAY(seventeen,Dummy{},Dummy{}),
-		DAY(eighteen,Dummy{},Dummy{}),
-		DAY(nineteen,Dummy{},Dummy{}),
-		DAY(twenty,Dummy{},Dummy{}),
-		DAY(twentyone,Dummy{},Dummy{}),
-		DAY(twentytwo,Dummy{},Dummy{}),
-		DAY(twentythree,Dummy{},Dummy{}),
-		DAY(twentyfour,Dummy{},Dummy{}),
-		DAY(twentyfive,Dummy{},Dummy{})
-	};
-
-#undef ARG
-#undef TESTCASE
-#undef FUNC_NAME
-#undef TEST_DECL
-#undef DAY
-#undef DUMMY
-#undef DUMMY_DAY
-	
 	constexpr int NUM_TESTS = sizeof(tests) / sizeof(verification_test);
 	std::array<test_result, NUM_TESTS> results;
 	std::transform(tests, tests + NUM_TESTS, begin(results),
@@ -236,14 +182,14 @@ bool verify_all(const std::string& filter)
 	auto result_to_string = [&filter](const test_result& result)
 	{
 		std::ostringstream oss;
-		oss << result.name << ": " << result.result << " - ";
+		oss << result.name << ": " << to_string(result.result) << " - ";
 		switch (result.status)
 		{
 		case test_status::pass:
 			oss << "PASS\n";
 			break;
 		case test_status::fail:
-			oss << "FAIL (expected " << result.expected << ")\n";
+			oss << "FAIL (expected " << to_string(result.expected) << ")\n";
 			break;
 		case test_status::filtered:
 			return std::string{ "" };
@@ -261,11 +207,21 @@ bool verify_all(const std::string& filter)
 		return std::count_if(begin(results), end(results), pred);
 	};
 
-	std::cout << "RESULTS:\n"
+	const auto total_time = std::transform_reduce(begin(results), end(results), std::chrono::nanoseconds{ 0 },
+		std::plus<std::chrono::nanoseconds>{}, [](const test_result& result) {return result.time_taken; });
+
+	std::cout << 
+		"RESULTS:\n"
 		"    PASSED : " << get_count(check_result<test_status::pass>) << "\n"
 		"    FAILED : " << get_count(check_result<test_status::fail>) << "\n"
-		"    UNKNOWN: " << get_count(check_result<test_status::unknown>) << '\n';
+		"    UNKNOWN: " << get_count(check_result<test_status::unknown>) << "\n"
+		"    TIME   : " << to_human_readable(total_time) << '\n';
 	return std::none_of(begin(results), end(results),check_result<test_status::fail>);
+}
+
+bool verify_all()
+{
+	return verify_all(DEFAULT_FILTER);
 }
 
 verification_test make_test(std::string name, TestFunc func, int64_t result)
@@ -273,7 +229,7 @@ verification_test make_test(std::string name, TestFunc func, int64_t result)
 	return make_test(std::move(name), func, std::to_string(result));
 }
 
-verification_test make_test(std::string name, TestFunc func, ResultType result)
+verification_test make_test(std::string name, TestFunc func, std::string result)
 {
 	return verification_test{ std::move(name),func,result,true };
 }

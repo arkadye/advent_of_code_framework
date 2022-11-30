@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <!-- VC 2019 -->
+  <Type Name="utils::small_vector&lt;*,*&gt;">
+    <Intrinsic Name="size" Expression="m_num_elements" />
+    <Intrinsic Name="capacity" Expression="m_capacity" />
+    <Intrinsic Name="heap_memory" Expression="m_data.heap_data" />
+    <Intrinsic Name="stack_memory" Expression="&amp;m_data.stack_buffer.memory[0]" />
+    <Intrinsic Name="using_heap" Expression="capacity() &gt; $T2" />
+    <DisplayString>{{ size={size()} }}</DisplayString>
+    <Expand>
+      <Item Name="[size]">size()</Item>
+      <Item Name="[capacity]" ExcludeView="simple">capacity()</Item>
+      <ArrayItems>
+        <Size>size()</Size>
+        <ValuePointer Condition="using_heap()">heap_memory()</ValuePointer>
+        <ValuePointer Condition="!using_heap()">reinterpret_cast&lt;value_type*&gt;(stack_memory())</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+</AutoVisualizer>
