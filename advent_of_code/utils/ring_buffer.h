@@ -1,16 +1,16 @@
 #pragma once
 
-#include <vector>
 #include <algorithm>
 
 #include "index_iterator2.h"
+#include "small_vector.h"
 
 namespace utils
 {
 	template <typename  T, std::size_t SIZE>
 	class ring_buffer
 	{
-		std::vector<T> m_data;
+		utils::small_vector<T,SIZE> m_data;
 		std::size_t m_front_idx;
 		constexpr std::size_t get_idx(std::size_t i) const noexcept
 		{
@@ -44,7 +44,7 @@ namespace utils
 		std::size_t size() const { return m_data.size(); }
 		std::size_t max_size() const { return m_data.max_size(); }
 
-		void fill(const T& value) { m_data.fill(value); }
+		void fill(const T& value) { std::fill(m_data.begin(),m_data.end(),value); }
 		void swap(ring_buffer& other) { m_data.swap(other.m_data); std::swap(m_front_idx, other.m_front_idx); }
 		void rotate(std::size_t new_front) { m_front_idx = get_idx(new_front); }
 		void rotate(const_iterator new_front) { rotate(new_front - begin()); }

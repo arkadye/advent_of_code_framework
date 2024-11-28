@@ -1,17 +1,23 @@
 #pragma once
 
 #include <iterator>
-#include <cassert>
+
+#include "advent/advent_assert.h"
 
 namespace utils
 {
 	template <typename Container>
-	class const_index_iterator2 : public std::random_access_iterator_tag
+	class const_index_iterator2
 	{
 	protected:
 		const Container* container;
 		std::size_t pos;
 	public:
+		using iterator_category = std::random_access_iterator_tag;
+		using value_type = typename Container::value_type;
+		using difference_type = typename Container::difference_type;
+		using pointer = typename Container::pointer_type;
+		using reference = typename Container::reference_type;
 		const_index_iterator2(const Container& c, std::size_t initial_pos) : container{ &c }, pos{ initial_pos }{}
 		const_index_iterator2() : container{ nullptr }, pos{ 0 }{}
 		const_index_iterator2(const const_index_iterator2&) = default;
@@ -21,7 +27,7 @@ namespace utils
 
 		bool operator==(const const_index_iterator2& other) const
 		{
-			assert(container == other.container);
+			AdventCheck(container == other.container);
 			return pos == other.pos;
 		}
 
@@ -30,18 +36,20 @@ namespace utils
 			return !(operator==(other));
 		}
 
-		std::ptrdiff_t operator-(const const_index_iterator2& other) const
+		difference_type operator-(const const_index_iterator2& other) const
 		{
-			assert(container == other.container);
-			return static_cast<std::ptrdiff_t>(pos) - other.pos;
+			AdventCheck(container == other.container);
+			return static_cast<difference_type>(pos) - other.pos;
 		}
 
-		typename const Container::value_type& operator*() const { return (*container)[pos]; }
-		typename const Container::value_type& operator->() const { return (*container)[pos]; }
-		const_index_iterator2& operator+=(int rhs) { pos += rhs; return *this; }
-		const_index_iterator2& operator-=(int rhs) { pos -= rhs; return *this; }
-		const_index_iterator2& operator++() { return (*this) += 1; }
-		const_index_iterator2& operator--() { return (*this) -= 1; }
+//		friend const_index_iterator2<Container>& operator+=(const_index_iterator2<Container>& lhs, difference_type rhs);
+//		friend const_index_iterator2<Container>& operator-=(const_index_iterator2<Container>& lhs, difference_type rhs);
+		const value_type& operator*() const { return (*container)[pos]; }
+		const value_type& operator->() const { return (*container)[pos]; }
+		const_index_iterator2& operator+=(difference_type rhs) { pos += rhs; return *this; }
+		const_index_iterator2& operator-=(difference_type rhs) { pos -= rhs; return *this; }
+		const_index_iterator2& operator++() { return (*this) += difference_type{1}; }
+		const_index_iterator2& operator--() { return (*this) -= difference_type{1}; }
 		const_index_iterator2 operator++(int)
 		{
 			const const_index_iterator2 res{ *this };
@@ -64,7 +72,7 @@ namespace utils
 		using const_index_iterator2<Container>::pos;
 	public:
 		index_iterator2(const Container& c, std::size_t initial_pos) : const_index_iterator2<Container>{ c,initial_pos } {}
-		index_iterator2() : const_index_iterator2{} {}
+		index_iterator2() : const_index_iterator2<Container>{} {}
 		index_iterator2(const index_iterator2&) = default;
 		index_iterator2(index_iterator2&&) = default;
 		index_iterator2& operator=(const index_iterator2&) = default;
@@ -93,13 +101,13 @@ namespace utils
 	template <typename Container>
 	inline const_index_iterator2<Container> make_idx_it_cbegin(const Container& c)
 	{
-		return const_index_iterator2{ c,0 };
+		return const_index_iterator2<Container>{ c,0 };
 	}
 
 	template <typename Container>
 	inline const_index_iterator2<Container> make_idx_it_cend(const Container& c)
 	{
-		return const_index_iterator2{ c,c.size() };
+		return const_index_iterator2<Container>{ c,c.size() };
 	}
 
 	template <typename Container>
@@ -117,18 +125,32 @@ namespace utils
 	template <typename Container>
 	inline index_iterator2<Container> make_idx_it_begin(Container& c)
 	{
-		return index_iterator2{ c,0 };
+		return index_iterator2<Container>{ c,0 };
 	}
 	
 	template <typename Container>
 	inline index_iterator2<Container> make_idx_it_end(Container& c)
 	{
-		return index_iterator2{ c,c.size() };
+		return index_iterator2<Container>{ c,c.size() };
 	}
 }
 
+// template <typename Container>
+// inline utils::const_index_iterator2<Container>& operator+=(utils::const_index_iterator2<Container>& lhs, typename utils::const_index_iterator2<Container>::difference_type rhs)
+// {
+// 	lhs.pos += rhs;
+// 	return lhs;
+// }
+// 
+// template <typename Container>
+// inline utils::const_index_iterator2<Container>& operator-=(utils::const_index_iterator2<Container>& lhs, typename utils::const_index_iterator2<Container>::difference_type rhs)
+// {
+// 	lhs.pos -= rhs;
+// 	return lhs;
+// }
+
 template <typename Container>
-utils::const_index_iterator2<Container> operator+(const utils::const_index_iterator2<Container>& left, int right)
+inline utils::const_index_iterator2<Container> operator+(const utils::const_index_iterator2<Container>& left, int right)
 {
 	auto result = left;
 	result += right;
@@ -136,7 +158,7 @@ utils::const_index_iterator2<Container> operator+(const utils::const_index_itera
 }
 
 template <typename Container>
-utils::const_index_iterator2<Container> operator-(const utils::const_index_iterator2<Container>& left, int right)
+inline utils::const_index_iterator2<Container> operator-(const utils::const_index_iterator2<Container>& left, int right)
 {
 	auto result = left;
 	result -= right;
@@ -144,7 +166,7 @@ utils::const_index_iterator2<Container> operator-(const utils::const_index_itera
 }
 
 template <typename Container>
-utils::index_iterator2<Container> operator+(const utils::index_iterator2<Container>& left, int right)
+inline utils::index_iterator2<Container> operator+(const utils::index_iterator2<Container>& left, int right)
 {
 	auto result = left;
 	result += right;
@@ -152,7 +174,7 @@ utils::index_iterator2<Container> operator+(const utils::index_iterator2<Contain
 }
 
 template <typename Container>
-utils::index_iterator2<Container> operator-(const utils::index_iterator2<Container>& left, int right)
+inline utils::index_iterator2<Container> operator-(const utils::index_iterator2<Container>& left, int right)
 {
 	auto result = left;
 	result -= right;

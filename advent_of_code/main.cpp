@@ -1,6 +1,7 @@
 #include "advent/advent_of_code.h"
 
 #include <iostream>
+#include <vector>
 
 int main(int argc, char** argv)
 {
@@ -10,14 +11,14 @@ int main(int argc, char** argv)
 	// and advent_eighteen_p2() (as well as any other test functions with "eighteen"
 	// in the function name.
 	// Leave blank to run everything.
-	if (argc > 1)
+	std::vector<std::string_view> filters;
+	for(int i=1;i<argc;++i)
 	{
-		verify_all(argv[1]);
+		filters.push_back(argv[i]);
 	}
-	else
-	{
-		verify_all();
-	}
+
+	verify_all(filters);
+
 #ifndef WIN32
 	std::cout << "Program finished. Press any key to continue.";
 	std::cin.get();

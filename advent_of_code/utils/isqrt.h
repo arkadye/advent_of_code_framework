@@ -5,7 +5,8 @@
 namespace utils
 {
 
-	uint32_t isqrt(uint32_t input);
-	int32_t isqrt(int32_t input);
-
+	uint64_t isqrt(uint64_t input) noexcept;
+	int64_t isqrt(int64_t input) noexcept;
+	bool is_square(uint64_t input) noexcept;
+	bool is_square(int64_t input) noexcept;
 }

@@ -9,6 +9,8 @@ namespace utils
 {
 	std::string_view remove_specific_prefix(std::string_view input, std::string_view prefix);
 	std::string_view remove_specific_suffix(std::string_view input, std::string_view suffix);
+	std::string_view remove_specific_prefix(std::string_view input, char prefix);
+	std::string_view remove_specific_suffix(std::string_view input, char suffix);
 
 	namespace internal
 	{

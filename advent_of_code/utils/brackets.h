@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string_view>
-#include "../advent/advent_utils.h"
+#include "advent/advent_utils.h"
 
 namespace utils
 {

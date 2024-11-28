@@ -2,10 +2,14 @@
 
 #include <compare>
 #include <numeric>
-#include <cassert>
 #include <cmath>
 #include <array>
 #include <iostream>
+
+#include "advent/advent_assert.h"
+#include "split_string.h"
+#include "to_value.h"
+#include "int_range.h"
 
 namespace utils
 {
@@ -17,6 +21,46 @@ namespace utils
 		down,
 		left
 	};
+
+	inline constexpr bool is_horizontal(direction dir)
+	{
+		switch (dir)
+		{
+		case direction::right:
+		case direction::left:
+			return true;
+		case direction::up:
+		case direction::down:
+			return false;
+		}
+		AdventUnreachable();
+		return false;
+	}
+
+	inline constexpr bool is_ascending(direction dir)
+	{
+		switch (dir)
+		{
+		case direction::right:
+		case direction::up:
+			return true;
+		case direction::left:
+		case direction::down:
+			return false;
+		}
+		AdventUnreachable();
+		return false;
+	}
+
+	inline constexpr bool is_vertical(direction dir)
+	{
+		return !is_horizontal(dir);
+	}
+
+	inline constexpr bool is_descending(direction dir)
+	{
+		return !is_ascending(dir);
+	}
 
 	enum class turn_dir : char
 	{
@@ -44,6 +88,23 @@ namespace utils
 		return static_cast<direction>(dir_i);
 	}
 
+	inline direction turn_around(direction dir)
+	{
+		switch (dir)
+		{
+		case direction::up:
+			return direction::down;
+		case direction::right:
+			return direction::left;
+		case direction::down:
+			return direction::up;
+		case direction::left:
+			return direction::right;
+		}
+		AdventUnreachable();
+		return dir;
+	}
+
 	template <typename T>
 	struct basic_coords
 	{
@@ -54,10 +115,20 @@ namespace utils
 		T size_squared() const noexcept { return x * x + y * y; }
 		double angle() const noexcept;
 		auto reduce() const noexcept;
-		auto manhatten_distance() const noexcept { return std::abs(x) + std::abs(y); }
+		auto manhatten_distance() const noexcept
+		{
+			if constexpr (std::is_unsigned_v<T>)
+			{
+				return x + y;
+			}
+			if constexpr (std::is_signed_v<T>)
+			{
+				return std::abs(x) + std::abs(y);
+			}
+		}
 		auto manhatten_distance(const basic_coords& other) const noexcept;
 		constexpr basic_coords(T x_, T y_) : x{ x_ }, y{ y_ }{}
-		constexpr basic_coords(T init) : basic_coords{ init,init } {}
+		constexpr explicit basic_coords(T init) : basic_coords{ init,init } {}
 		constexpr basic_coords() : basic_coords{ 0 } {}
 
 		basic_coords& operator=(const basic_coords&) noexcept = default;
@@ -70,7 +141,7 @@ namespace utils
 			return *this;
 		}
 
-		template <typename T2>
+		template <typename T2> 
 		basic_coords& operator-=(const basic_coords<T2>& other) noexcept
 		{
 			x -= other.x;
@@ -78,7 +149,7 @@ namespace utils
 			return *this;
 		}
 
-		template <typename RHSTYPE>
+		template <typename RHSTYPE>  requires std::is_arithmetic_v<RHSTYPE>
 		basic_coords& operator*=(RHSTYPE other) noexcept
 		{
 			x *= other;
@@ -86,20 +157,47 @@ namespace utils
 			return *this;
 		}
 
-		template <typename RHSTYPE>
+		template <typename RHSTYPE> requires std::is_arithmetic_v<RHSTYPE>
 		basic_coords& operator/=(RHSTYPE other) noexcept
 		{
-			assert(other != static_cast<RHSTYPE>(0));
+			AdventCheck(other != static_cast<RHSTYPE>(0));
 			x /= other;
 			y /= other;
 			return *this;
 		}
 
+		T operator[](std::size_t idx) const noexcept
+		{
+			AdventCheck(idx < 2u);
+			switch(idx)
+			{
+			case 0: return x;
+			case 1: return y;
+			default:
+				AdventUnreachable();
+				break;
+			}
+			return static_cast<T>(0);
+		}
 
-		static basic_coords up() noexcept { return basic_coords{ 0,1 }; }
-		static basic_coords down() noexcept { return basic_coords{ 0,-1 }; }
-		static basic_coords left() noexcept { return basic_coords{ -1,0 }; }
-		static basic_coords right() noexcept { return basic_coords{ 1,0 }; }
+		T& operator[](std::size_t idx) noexcept
+		{
+			AdventCheck(idx < 2u);
+			switch (idx)
+			{
+			case 0: return x;
+			case 1: return y;
+			default:
+				AdventUnreachable();
+				break;
+			}
+			return x;
+		}
+
+		static basic_coords up() noexcept { return basic_coords{ static_cast<T>(0),static_cast<T>(1) }; }
+		static basic_coords down() noexcept { static_assert(std::is_signed_v<T>); return basic_coords{ static_cast<T>(0),static_cast<T>(-1) }; }
+		static basic_coords left() noexcept { static_assert(std::is_signed_v<T>); return basic_coords{ static_cast<T>(-1),static_cast<T>(0) }; }
+		static basic_coords right() noexcept { return basic_coords{ static_cast<T>(1),static_cast<T>(0) }; }
 		static basic_coords dir(direction dir) noexcept
 		{
 			switch (dir)
@@ -113,23 +211,24 @@ namespace utils
 			case direction::right:
 				return right();
 			default:
-				assert(false);
+				AdventCheck(false);
 				return basic_coords{};
 			}
 		}
 
-		// Return North, south, east, and west tiles.
+		// Return cardinal directions, starting from North and moving clockwise.
 		auto neighbours() const
 		{
 			return std::array<basic_coords, 4>
 			{
 				*this + up(),
 				*this + down(),
-				*this + left(),
-				*this + right()
+				*this + right(),
+				*this + left()
 			};
 		}
 
+		// Returns all eight compass points starting from North and moving clockwise.
 		auto neighbours_plus_diag() const
 		{
 			return std::array<basic_coords, 8>
@@ -144,9 +243,21 @@ namespace utils
 				*this + left() + up()
 			};
 		}
+
+		static basic_coords from_chars(std::string_view input)
+		{
+			basic_coords result;
+			auto [x, y] = utils::split_string_at_first(input, ',');
+			x = utils::trim_string(x);
+			y = utils::trim_string(y);
+			result.x = utils::to_value<T>(x);
+			result.y = utils::to_value<T>(y);
+			return result;
+		}
 	};
 
-	using coords = basic_coords<int>;
+	using coords = basic_coords<int32_t>;
+	using coords64 = basic_coords<int64_t>;
 
 	inline double pi()
 	{
@@ -178,24 +289,24 @@ namespace utils
 		return result;
 	}
 
-	template <typename T>
-	inline auto operator/(const basic_coords<T>& l, int r) noexcept
+	template <typename T, typename OtherType> requires std::is_arithmetic_v<OtherType>
+	inline auto operator/(const basic_coords<T>& l, OtherType r) noexcept
 	{
 		basic_coords result = l;
 		result /= r;
 		return result;
 	}
 
-	template <typename T>
-	inline auto operator*(const basic_coords<T>& l, int r) noexcept
+	template <typename T, typename OtherType> requires std::is_arithmetic_v<OtherType>
+	inline auto operator*(const basic_coords<T>& l, OtherType r) noexcept
 	{
 		basic_coords result = l;
 		result *= r;
 		return result;
 	}
 
-	template <typename T>
-	inline auto operator*(int l, const basic_coords<T>& r) noexcept
+	template <typename T, typename OtherType> requires std::is_arithmetic_v<OtherType>
+	inline auto operator*(OtherType l, const basic_coords<T>& r) noexcept
 	{
 		return r * l;
 	}
@@ -217,7 +328,9 @@ namespace utils
 	template <typename T>
 	inline auto basic_coords<T>::manhatten_distance(const basic_coords& other) const noexcept
 	{
-		const basic_coords t = *this - other;
+		const T x_diff = (x < other.x ? other.x - x : x - other.x);
+		const T y_diff = (y < other.y ? other.y - y : y - other.y);
+		const basic_coords t{x_diff,y_diff};
 		return t.manhatten_distance();
 	}
 
@@ -230,7 +343,39 @@ namespace utils
 	template <typename T>
 	inline std::ostream& operator<<(std::ostream& out, const basic_coords<T>& c)
 	{
-		out << "{ " << c.x << " , " << c.y << " }";
+		out << c.x << " , " << c.y;
 		return out;
+	}
+
+	inline std::ostream& operator<<(std::ostream& out, direction dir)
+	{
+		switch (dir)
+		{
+		case direction::up:
+			out << "up";
+			break;
+		case direction::right:
+			out << "right";
+			break;
+		case direction::down:
+			out << "down";
+			break;
+		case direction::left:
+			out << "left";
+			break;
+		default:
+			AdventUnreachable();
+			break;
+		}
+		return out;
+	}
+
+	template <typename T>
+	inline std::istream& operator>>(std::istream& in, basic_coords<T>& c)
+	{
+		char mid = '\0';
+		in >> c.x >> mid >> c.y;
+		AdventCheck(mid == ',');
+		return in;
 	}
 }

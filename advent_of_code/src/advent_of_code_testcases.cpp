@@ -13,13 +13,26 @@
 #include "../advent/advent_of_code.h"
 #include "../advent/advent_headers.h"
 #include "../advent/advent_setup.h"
+#include "../advent/advent_assert.h"
+
+namespace
+{
+	struct ResultStringifier
+	{
+		std::string operator()(const std::string& in) const noexcept { return in; }
+		template <std::integral T>
+		std::string operator()(T in) const { return std::to_string(in); }
+	};
+}
 
 std::string to_string(const ResultType& rt)
 {
-	if (std::holds_alternative<std::string>(rt)) return std::get<std::string>(rt);
-	else if (std::holds_alternative<int64_t>(rt)) return std::to_string(std::get<int64_t>(rt));
-	assert(false);
-	return "!ERROR!";
+	return std::visit(ResultStringifier{}, rt);
+}
+
+std::string to_string(const std::optional<std::string>& os)
+{
+	return os.value_or("");
 }
 
 // Result a test can give.
@@ -140,56 +153,97 @@ std::string to_human_readable(std::chrono::nanoseconds time)
 	return to_human_readable(us);
 }
 
-test_result run_test(const verification_test& test, std::string_view filter)
+template <typename TestType>
+ResultType test_execute_wrapper(TestType test)
 {
-	if (test.name.find(filter) == test.name.npos)
+#ifdef NDEBUG
+	return test.execute();
+#else
+	try
 	{
-		return test_result{
-			test.name,
-			"",
-			to_string(test.expected_result),
-			test_status::filtered
-		};
+		return test.execute();
 	}
-	std::cout << "Running test " << test.name << ": ";
-	const auto start_time = std::chrono::high_resolution_clock::now();
-	const auto res = test.test_func();
-	const auto end_time = std::chrono::high_resolution_clock::now();
-	const std::chrono::nanoseconds time_taken = end_time - start_time;
-	const auto string_result = to_string(res);
-	std::cout << "took " << to_human_readable(time_taken) <<  " and got " << string_result << '\n';
-	auto get_result = [&](test_status status)
+	catch (const advent::test_failed& tf)
 	{
-		return test_result{ test.name,string_result,test.expected_result,status,time_taken };
-	};
-	if (test.result_known && string_result == test.expected_result)
-	{
-		return get_result(test_status::pass);
+		return std::string{ "ERROR: " } + std::string{ tf.what() };
 	}
-	else if (test.result_known && string_result != test.expected_result)
-	{
-		return get_result(test_status::fail);
-	}
-	return get_result(test_status::unknown);
+#endif
 }
 
-bool verify_all(const std::string& filter)
+template <typename TestType>
+std::pair<ResultType,std::chrono::nanoseconds> run_test_func(TestType test)
 {
-	constexpr int NUM_TESTS = sizeof(tests) / sizeof(verification_test);
+	const auto start_time = std::chrono::high_resolution_clock::now();
+	const ResultType res = test_execute_wrapper(std::move(test));
+	const auto end_time = std::chrono::high_resolution_clock::now();
+	return std::pair{res, end_time - start_time};
+}
+
+struct TestExecutor
+{
+	template <typename TestType>
+	std::pair<ResultType,std::chrono::nanoseconds> operator()(TestType test) { return run_test_func(std::move(test)); }
+};
+
+test_result run_test(const verification_test& test, const std::vector<std::string_view>& filter)
+{
+	if(!filter.empty())
+	{
+		auto filter_pred = [name = std::string_view{ test.name }](std::string_view filter_item)
+		{
+			return name.find(filter_item) != name.npos;
+		};
+		const bool matches_filter = std::ranges::any_of(filter, filter_pred);
+		if(!matches_filter)
+		{
+			return test_result{
+				test.name,
+				"",
+				to_string(test.expected_result),
+				test_status::filtered
+			};
+		}
+	}
+	std::cout << "Running test " << test.name << "...";
+	const auto [res,time_taken] = std::visit(TestExecutor{}, test.test_func);
+	const auto string_result = to_string(res);
+	std::cout << "\nFinished " << test.name << ": took " << to_human_readable(time_taken) <<  " and got " << string_result << '\n';
+	auto get_result = [&](test_status status)
+	{
+		return test_result{ test.name,string_result,to_string(test.expected_result),status,time_taken };
+	};
+
+	if(!test.expected_result.has_value())
+	{
+		return get_result(test_status::unknown);
+	}
+	else
+	{
+		return get_result(string_result == *test.expected_result ? test_status::pass : test_status::fail);
+	}
+}
+
+bool verify_all(const std::vector<std::string_view>& filter)
+{
+	constexpr auto NUM_TESTS = std::size(tests);
 	std::array<test_result, NUM_TESTS> results;
-	std::transform(tests, tests + NUM_TESTS, begin(results),
-		std::bind(run_test,std::placeholders::_1,filter));
+	std::ranges::transform(tests, begin(results),
+		[&filter](const verification_test& test)
+		{
+			return run_test(test, filter);
+		});
+
 	auto result_to_string = [&filter](const test_result& result)
 	{
 		std::ostringstream oss;
-		oss << result.name << ": " << to_string(result.result) << " - ";
+		oss << result.name << ": " << result.result << " - ";
 		switch (result.status)
 		{
 		case test_status::pass:
 			oss << "PASS\n";
 			break;
 		case test_status::fail:
-			oss << "FAIL (expected " << to_string(result.expected) << ")\n";
+			oss << "FAIL (expected " << result.expected << ")\n";
 			break;
 		case test_status::filtered:
 			return std::string{ "" };
@@ -200,11 +254,11 @@ bool verify_all(const std::string& filter)
 		return oss.str();
 	};
 
-	std::transform(begin(results),end(results),std::ostream_iterator<std::string>(std::cout), result_to_string);
+	std::ranges::transform(results,std::ostream_iterator<std::string>(std::cout), result_to_string);
 
 	auto get_count = [&results](auto pred)
 	{
-		return std::count_if(begin(results), end(results), pred);
+		return std::ranges::count_if(results, pred);
 	};
 
 	const auto total_time = std::transform_reduce(begin(results), end(results), std::chrono::nanoseconds{ 0 },
@@ -216,12 +270,7 @@ bool verify_all(const std::string& filter)
 		"    FAILED : " << get_count(check_result<test_status::fail>) << "\n"
 		"    UNKNOWN: " << get_count(check_result<test_status::unknown>) << "\n"
 		"    TIME   : " << to_human_readable(total_time) << '\n';
-	return std::none_of(begin(results), end(results),check_result<test_status::fail>);
-}
-
-bool verify_all()
-{
-	return verify_all(DEFAULT_FILTER);
+	return std::ranges::none_of(results,check_result<test_status::fail>);
 }
 
 verification_test make_test(std::string name, TestFunc func, int64_t result)
@@ -231,15 +280,31 @@ verification_test make_test(std::string name, TestFunc func, int64_t result)
 
 verification_test make_test(std::string name, TestFunc func, std::string result)
 {
-	return verification_test{ std::move(name),func,result,true };
+	return verification_test{ std::move(name),func,std::move(result) };
 }
 
 verification_test make_test(std::string name, TestFunc func, Dummy)
 {
-	return verification_test{ std::move(name),func,"",false };
+	return verification_test{ std::move(name),func };
 }
 
-verification_test make_test(std::string name, Dummy, Dummy)
+verification_test make_test(std::string name, TestFuncWithArg func, int64_t result, std::string arg)
 {
-	return make_test(std::move(name), []() { std::cout << "Test not implemented yet"; return ResultType{ 0 }; }, Dummy{});
+	return make_test(std::move(name), func, std::to_string(result), std::move(arg));
+}
+
+verification_test make_test(std::string name, TestFuncWithArg func, std::string result, std::string arg)
+{
+	return verification_test{std::move(name), func, std::move(arg), std::move(result)};
+}
+
+verification_test make_test(std::string name, TestFuncWithArg func, Dummy, std::string arg)
+{
+	return verification_test{std::move(name), func, std::move(arg)};
+}
+
+ResultType TestWithArgExecutable::execute()
+{
+	std::istringstream iss{ std::move(arg)};
+	return func(iss);
 }

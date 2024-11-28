@@ -1,12 +1,11 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
 
 namespace utils
 {
-	template <typename T> 
-	inline bool range_contains_inc(T val, T min, T max)
+	template <typename T, typename U, typename V> 
+	inline bool range_contains_inc(const T& val, const U& min, const V& max)
 	{
 		if (min > max)
 		{
@@ -15,8 +14,8 @@ namespace utils
 		return min <= val && val <= max;
 	}
 
-	template <typename T>
-	inline bool range_contains_exc(T val, T min, T max)
+	template <typename T, typename U, typename V>
+	inline bool range_contains_exc(const T& val, const U& min, const V& max)
 	{
 		if (min > max)
 		{

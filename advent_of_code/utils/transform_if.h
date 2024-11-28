@@ -32,4 +32,25 @@ namespace utils
 	{
 		return transform_if(start, end, destination, transform_func, [](const decltype(*start)&) {return true; }, predicate_func);
 	}
+
+	namespace ranges
+	{
+		template <typename RangeType, typename OutputIt, typename Transform, typename PrePred, typename PostPred>
+		OutputIt transform_if(RangeType&& range, OutputIt destination, Transform transform_func, PrePred pre_pred, PostPred post_pred)
+		{
+			return utils::transform_if(begin(range), end(range), destination, transform_func, pre_pred, post_pred);
+		}
+
+		template <typename RangeType, typename OutputIt, typename Transform, typename Pred>
+		OutputIt transform_if_pre(RangeType&& range, OutputIt destination, Transform transform_func, Pred predicate_func)
+		{
+			return utils::transform_if_pre(begin(range), end(range), destination, transform_func, predicate_func);
+		}
+
+		template <typename RangeType, typename OutputIt, typename Transform, typename Pred>
+		OutputIt transform_if_post(RangeType&& range, OutputIt destination, Transform transform_func, Pred predicate_func)
+		{
+			return utils::transform_if_post(begin(range), end(range), destination, transform_func, predicate_func);
+		}
+	}
 }

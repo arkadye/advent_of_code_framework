@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iterator>
-#include <cassert>
+
+
+#include "advent/advent_assert.h"
 
 namespace utils
 {
@@ -22,14 +24,14 @@ namespace utils
 		bool empty() const noexcept { return first == last; }
 		span remove_prefix(std::size_t num) const
 		{
-			assert(num <= size());
+			AdventCheck(num <= size());
 			ItType new_first = first;
 			std::advance(new_first, num);
 			return span{ new_first,last };
 		}
 		span remove_suffix(std::size_t num) const noexcept
 		{
-			assert(num <= size());
+			AdventCheck(num <= size());
 			ItType new_last = last;
 			std::ptrdiff_t offset = 0 - static_cast<std::ptrdiff_t>(num);
 			std::advance(new_last, offset);
@@ -37,7 +39,7 @@ namespace utils
 		}
 		auto operator[](std::size_t idx) const noexcept
 		{
-			assert(idx < size());
+			AdventCheck(idx < size());
 			ItType location = first;
 			std::advance(location, idx);
 			return *location;

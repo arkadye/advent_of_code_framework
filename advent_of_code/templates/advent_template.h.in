@@ -1,0 +1,6 @@
+#pragma once
+
+#include "advent/advent_types.h"
+
+ResultType advent_@DAYTXT@_p1();
+ResultType advent_@DAYTXT@_p2();

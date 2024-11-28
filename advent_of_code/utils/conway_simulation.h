@@ -2,7 +2,6 @@
 
 #include <map>
 #include <algorithm>
-#include <cassert>
 #include <vector>
 #include <iterator>
 #include <array>
@@ -10,6 +9,7 @@
 #include <shared_mutex>
 #include <mutex>
 
+#include "advent/advent_assert.h"
 #include "sorted_vector.h"
 #include "range_contains.h"
 #include "erase_remove_if.h"
@@ -74,8 +74,8 @@ namespace utils::conway_simulation
 		const std::pair<std::size_t,std::size_t>& turn_on_range,
 		const std::pair<std::size_t,std::size_t>& turn_off_range)
 	{
-		assert(turn_on_range.first <= turn_on_range.second);
-		assert(turn_off_range.first <= turn_off_range.second);
+		AdventCheck(turn_on_range.first <= turn_on_range.second);
+		AdventCheck(turn_off_range.first <= turn_off_range.second);
 		return [=](const CoordType&, bool is_on, std::size_t num_neighbours_on)
 		{
 			if (is_on)
@@ -90,7 +90,7 @@ namespace utils::conway_simulation
 	template <std::size_t DIMS>
 	auto make_default_gather_func(int range)
 	{
-		assert(range > 0);
+		AdventCheck(range > 0);
 		using CoordType = std::array<int, DIMS>;
 		return [range](const CoordType& cell)
 		{
@@ -116,7 +116,7 @@ namespace utils::conway_simulation
 				{
 					break;
 				}
-				assert(*inc_it < range);
+				AdventCheck(*inc_it < range);
 				++(*inc_it);
 				std::fill(begin(current_offset), inc_it, 0 - range);
 			}
@@ -239,7 +239,7 @@ namespace utils::conway_simulation
 		auto neighbours = std::make_pair(coords, m_gather_neighbours(coords));
 		std::lock_guard guard{ m_cached_neighbours_lock };
 		const auto insert_it = m_cached_neighbours.insert(std::move(neighbours));
-		assert(insert_it.second);
+		AdventCheck(insert_it.second);
 		return insert_it.first->second;
 	}
 }

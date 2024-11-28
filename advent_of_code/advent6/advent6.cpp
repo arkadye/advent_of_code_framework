@@ -1,11 +1,15 @@
 #include "advent6.h"
-#include "../advent/advent_utils.h"
+#include "advent/advent_utils.h"
 
+#ifdef FORCE_DAY6DBG
+#define DAY6DBG 1
+#else
 #define ENABLE_DAY6DBG 1
 #ifdef NDEBUG
 #define DAY6DBG 0
 #else
 #define DAY6DBG ENABLE_DAY6DBG
+#endif
 #endif
 
 #if DAY6DBG
@@ -15,7 +19,7 @@
 namespace
 {
 #if DAY6DBG
-	std::ostream & log = std::cout;
+	std::ostream& log = std::cout;
 #else
 	struct {	template <typename T> auto& operator<<(const T&) const noexcept { return *this; } } log;
 #endif
@@ -23,7 +27,7 @@ namespace
 
 namespace
 {
-	int solve_p1(std::istream& input)
+	int64_t solve_p1(std::istream& input)
 	{
 		return 0;
 	}
@@ -31,7 +35,7 @@ namespace
 
 namespace
 {
-	int solve_p2(std::istream& input)
+	int64_t solve_p2(std::istream& input)
 	{
 		return 0;
 	}

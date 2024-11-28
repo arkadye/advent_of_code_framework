@@ -3,7 +3,7 @@
 #include <vector>
 #include <type_traits>
 
-#include "../advent/advent_utils.h"
+#include "advent/advent_assert.h"
 
 namespace utils
 {

@@ -1,36 +1,37 @@
 #pragma once
 
 #include "advent_testcase_setup.h"
-
-static const std::string DEFAULT_FILTER = "";
+#include "advent_test_inputs.h"
+#include "advent_headers.h"
+#include "advent_solutions.h"
 
 static const verification_test tests[] =
 {
-	DAY(one,Dummy{},Dummy{}),
-	DAY(two,Dummy{},Dummy{}),
-	DAY(three,Dummy{},Dummy{}),
-	DAY(four,Dummy{},Dummy{}),
-	DAY(five,Dummy{},Dummy{}),
-	DAY(six,Dummy{},Dummy{}),
-	DAY(seven,Dummy{},Dummy{}),
-	DAY(eight,Dummy{},Dummy{}),
-	DAY(nine,Dummy{},Dummy{}),
-	DAY(ten,Dummy{},Dummy{}),
-	DAY(eleven,Dummy{},Dummy{}),
-	DAY(twelve,Dummy{},Dummy{}),
-	DAY(thirteen,Dummy{},Dummy{}),
-	DAY(fourteen,Dummy{},Dummy{}),
-	DAY(fifteen,Dummy{},Dummy{}),
-	DAY(sixteen,Dummy{},Dummy{}),
-	DAY(seventeen,Dummy{},Dummy{}),
-	DAY(eighteen,Dummy{},Dummy{}),
-	DAY(nineteen,Dummy{},Dummy{}),
-	DAY(twenty,Dummy{},Dummy{}),
-	DAY(twentyone,Dummy{},Dummy{}),
-	DAY(twentytwo,Dummy{},Dummy{}),
-	DAY(twentythree,Dummy{},Dummy{}),
-	DAY(twentyfour,Dummy{},Dummy{}),
-	DAY(twentyfive,Dummy{},"MERRY CHRISTMAS!")
+	DAY(one,DAY_01_1_SOLUTION,DAY_01_2_SOLUTION),
+	DAY(two,DAY_02_1_SOLUTION,DAY_02_2_SOLUTION),
+	DAY(three,DAY_03_1_SOLUTION,DAY_03_2_SOLUTION),
+	DAY(four,DAY_04_1_SOLUTION,DAY_04_2_SOLUTION),
+	DAY(five,DAY_05_1_SOLUTION,DAY_05_2_SOLUTION),
+	DAY(six,DAY_06_1_SOLUTION,DAY_06_2_SOLUTION),
+	DAY(seven,DAY_07_1_SOLUTION,DAY_07_2_SOLUTION),
+	DAY(eight,DAY_08_1_SOLUTION,DAY_08_2_SOLUTION),
+	DAY(nine,DAY_09_1_SOLUTION,DAY_09_2_SOLUTION),
+	DAY(ten, DAY_10_1_SOLUTION, DAY_10_2_SOLUTION),
+	DAY(eleven, DAY_11_1_SOLUTION, DAY_11_2_SOLUTION),
+	DAY(twelve, DAY_12_1_SOLUTION, DAY_12_2_SOLUTION),
+	DAY(thirteen, DAY_13_1_SOLUTION, DAY_13_2_SOLUTION),
+	DAY(fourteen, DAY_14_1_SOLUTION, DAY_14_2_SOLUTION),
+	DAY(fifteen, DAY_15_1_SOLUTION, DAY_15_2_SOLUTION),
+	DAY(sixteen, DAY_16_1_SOLUTION, DAY_16_2_SOLUTION),
+	DAY(seventeen, DAY_17_1_SOLUTION, DAY_17_2_SOLUTION),
+	DAY(eighteen, DAY_18_1_SOLUTION, DAY_18_2_SOLUTION),
+	DAY(nineteen, DAY_19_1_SOLUTION, DAY_19_2_SOLUTION),
+	DAY(twenty, DAY_20_1_SOLUTION, DAY_20_2_SOLUTION),
+	DAY(twentyone, DAY_21_1_SOLUTION, DAY_21_2_SOLUTION),
+	DAY(twentytwo, DAY_22_1_SOLUTION, DAY_22_2_SOLUTION),
+	DAY(twentythree, DAY_23_1_SOLUTION, DAY_23_2_SOLUTION),
+	DAY(twentyfour, DAY_24_1_SOLUTION, DAY_24_2_SOLUTION),
+	DAY(twentyfive, DAY_25_1_SOLUTION,"MERRY CHRISTMAS!")
 };
 
 #undef ARG

@@ -1,0 +1,72 @@
+#Ignore puzzle inputs
+*.txt
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.iobj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Files used by the build but not part of it
+*.ipch
+*.pdb
+*.tlog
+*.ipdb
+*.db
+*.db-*
+*.opendb
+*.log
+*.idb
+*.ilk
+*.enc
+*.recipe
+
+# Visual studio project files
+*.vcxproj
+*.vcxproj.*
+.vs/*
+*.sln
+
+# Files marked as backup
+*.bak
+
+# For Advent of Code, don't accidentally upload puzzle data.
+*.txt
+*.vsidx
+*.lock
+*.i
+*.json
+
+# For CMAKE temporaries
+advent_of_code/CMakeFiles/*
+advent_of_code/.vs/*
+*.cmake
+!*/cmakelists.txt

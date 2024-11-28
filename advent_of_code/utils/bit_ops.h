@@ -39,7 +39,7 @@ namespace utils
 			if constexpr (sizeof(T) > 4)
 			{
 				T result = 0;
-				while (result > 0)
+				while (input > 0)
 				{
 					const uint32_t low_bits = input;
 					input = input >> 32;
